@@ -1,0 +1,98 @@
+project:
+  name: my-app
+  version: 1.0.0
+
+services:
+  # Example 1: Simple Node.js service
+  - name: api
+    port: 3000
+    domains:
+      - api.example.com
+      - www.api.example.com
+    healthCheck:
+      path: /health
+      interval: 30
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+  # Example 2: Docker container service
+  - name: webapp
+    port: 8080
+    docker:
+      image: nginx:latest
+      container: webapp-container
+      port: 80
+    domains:
+      - example.com
+      - www.example.com
+    healthCheck:
+      path: /
+      interval: 30
+
+  # Example 3: Multiple subdomains with Docker
+  - name: dashboard
+    port: 5000
+    docker:
+      image: myapp/dashboard:latest
+      container: dashboard-container
+      port: 5000
+    domains:
+      - dashboard.example.com
+      - admin.example.com
+    healthCheck:
+      path: /api/health
+      interval: 60
+    environment:
+      DATABASE_URL: postgresql://localhost:5432/dashboard
+      REDIS_URL: redis://localhost:6379
+
+  # Example 4: Service connecting to existing Docker container
+  - name: database-proxy
+    port: 5432
+    docker:
+      container: postgres-container
+      port: 5432
+    domains:
+      - db.example.com
+
+  # Example 5: Multiple services on the same domain with path-based routing
+  # API service on /api path
+  - name: api
+    port: 3001
+    path: /api
+    domains:
+      - muacle.com
+    docker:
+      image: myapp/api:latest
+      container: api-container
+      port: 3001
+    healthCheck:
+      path: /health
+      interval: 30
+
+  # UI service on root path
+  - name: ui
+    port: 3000
+    path: /
+    domains:
+      - muacle.com
+    docker:
+      image: myapp/ui:latest
+      container: ui-container
+      port: 3000
+    healthCheck:
+      path: /
+      interval: 30
+
+nginx:
+  configPath: /etc/nginx/sites-available
+  reloadCommand: sudo nginx -t && sudo systemctl reload nginx
+
+certbot:
+  email: admin@example.com
+  staging: false  # Set to true for testing
+
+deployment:
+  strategy: rolling  # Options: rolling, blue-green
+  healthCheckTimeout: 30000  # milliseconds
