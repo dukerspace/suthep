@@ -41,7 +41,7 @@ After installation, verify that Suthep is installed correctly:
 suthep --version
 ```
 
-You should see the version number (e.g., `0.1.0-beta.1`).
+You should see the version number (e.g., `1.1.1`).
 
 You can also check the help menu:
 
@@ -180,9 +180,13 @@ If `suthep setup` fails:
    - CentOS/RHEL: Ensure `yum` is available
    - macOS: Ensure Homebrew is installed
 
-2. **Run setup with verbose output:**
+2. **Try installing components separately:**
    ```bash
-   suthep setup --verbose
+   # Try installing Nginx first
+   suthep setup --nginx-only
+
+   # Then install Certbot
+   suthep setup --certbot-only
    ```
 
 3. **Install prerequisites manually** (see Manual Installation above)
