@@ -41,7 +41,7 @@ pnpm add -g suthep
 suthep --version
 ```
 
-คุณควรเห็นหมายเลขเวอร์ชัน (เช่น `0.1.0-beta.1`)
+คุณควรเห็นหมายเลขเวอร์ชัน (เช่น `1.1.1`)
 
 คุณยังสามารถตรวจสอบเมนูช่วยเหลือ:
 
@@ -180,9 +180,13 @@ brew install docker
    - CentOS/RHEL: ตรวจสอบว่า `yum` พร้อมใช้งาน
    - macOS: ตรวจสอบว่า Homebrew ติดตั้งแล้ว
 
-2. **รัน setup พร้อม verbose output:**
+2. **ลองติดตั้งแยกส่วน:**
    ```bash
-   suthep setup --verbose
+   # ลองติดตั้งเฉพาะ Nginx ก่อน
+   suthep setup --nginx-only
+
+   # จากนั้นติดตั้ง Certbot
+   suthep setup --certbot-only
    ```
 
 3. **ติดตั้งสิ่งที่จำเป็นด้วยตนเอง** (ดูการติดตั้งด้วยตนเองด้านบน)
