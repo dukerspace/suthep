@@ -14,6 +14,7 @@ Suthep provides the following commands:
 - `suthep restart` - Restart services
 - `suthep list` - List all services and their status
 - `suthep logs` - View service logs
+- `suthep self-update` - Update suthep to the latest version from npm
 
 ## suthep init
 
@@ -458,6 +459,65 @@ suthep logs api --follow --tail 200
 - **Follow mode**: Use `--follow` to stream logs in real-time. Press `Ctrl+C` to stop.
 - **Multiple services**: When viewing logs for multiple services, each log line is prefixed with the service name in a unique color.
 - **Tail option**: The `--tail` option controls how many lines to show from the end of the log file. This applies to both follow and non-follow modes.
+
+## suthep self-update
+
+Update suthep to the latest version from npm registry.
+
+### Usage
+
+```bash
+suthep self-update [options]
+# or
+suthep update [options]
+```
+
+### Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--force` | Force update even if current version is newer | `false` |
+
+### Examples
+
+```bash
+# Check for updates and update if available
+suthep self-update
+
+# Use the alias
+suthep update
+
+# Force update even if current version is newer
+suthep self-update --force
+```
+
+### What It Does
+
+1. **Reads package information** from `package.json` (package name and current version)
+2. **Fetches latest version** from npm registry (https://registry.npmjs.org/)
+3. **Compares versions** (current vs latest)
+4. **Updates if needed**:
+   - If latest version is newer: Updates to latest version
+   - If versions are the same: Shows message that you're up to date
+   - If current version is newer: Warns (unless `--force` is used)
+5. **Installs update** globally using `npm install -g`
+
+### Notes
+
+- **Network connection required**: The command needs internet access to fetch version information from npm registry
+- **Global installation**: Updates the globally installed suthep package
+- **Terminal restart**: After updating, you may need to restart your terminal for changes to take effect
+- **Explicit npm registry**: Uses the official npm registry (registry.npmjs.org) explicitly to ensure reliable updates
+- **Version comparison**: Uses semantic version comparison to determine if an update is needed
+- **Force flag**: Use `--force` only if you want to downgrade or reinstall the current version
+
+### Output
+
+The command provides clear feedback:
+- Current version number
+- Latest version from npm
+- Update status
+- Success/error messages
 
 ## Global Options
 
