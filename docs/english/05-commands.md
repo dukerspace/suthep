@@ -11,6 +11,9 @@ Suthep provides the following commands:
 - `suthep deploy` - Deploy services
 - `suthep down` - Stop services
 - `suthep up` - Start services
+- `suthep restart` - Restart services
+- `suthep list` - List all services and their status
+- `suthep logs` - View service logs
 
 ## suthep init
 
@@ -116,7 +119,7 @@ suthep deploy [service-name] [options]
 
 | Argument | Description |
 |----------|-------------|
-| `service-name` | Name of the service to deploy (optional, deploys all services if not specified) |
+| `service-name` | Name or index (1-based) of the service to deploy (optional, deploys all services if not specified). Use `suthep list` to see available services with indices. |
 
 ### Options
 
@@ -133,8 +136,11 @@ suthep deploy [service-name] [options]
 # Deploy all services with default configuration
 suthep deploy
 
-# Deploy a specific service
+# Deploy a specific service by name
 suthep deploy api
+
+# Deploy a specific service by index (see indices with `suthep list`)
+suthep deploy 1
 
 # Deploy with custom config file
 suthep deploy -f production.yml
@@ -179,7 +185,7 @@ suthep down [service-name] [options]
 
 | Argument | Description |
 |----------|-------------|
-| `service-name` | Name of the service to bring down (optional) |
+| `service-name` | Name or index (1-based) of the service to bring down (optional). Use `suthep list` to see available services with indices. |
 
 ### Options
 
@@ -191,8 +197,11 @@ suthep down [service-name] [options]
 ### Examples
 
 ```bash
-# Bring down a specific service
+# Bring down a specific service by name
 suthep down api
+
+# Bring down a specific service by index
+suthep down 1
 
 # Bring down all services
 suthep down --all
@@ -221,7 +230,7 @@ suthep up [service-name] [options]
 
 | Argument | Description |
 |----------|-------------|
-| `service-name` | Name of the service to bring up (optional) |
+| `service-name` | Name or index (1-based) of the service to bring up (optional). Use `suthep list` to see available services with indices. |
 
 ### Options
 
@@ -235,8 +244,11 @@ suthep up [service-name] [options]
 ### Examples
 
 ```bash
-# Bring up a specific service
+# Bring up a specific service by name
 suthep up api
+
+# Bring up a specific service by index
+suthep up 1
 
 # Bring up all services
 suthep up --all
@@ -251,6 +263,201 @@ suthep up api --no-https
 2. **Enables Nginx configurations**
 3. **Sets up HTTPS** (if enabled)
 4. **Reloads Nginx** to apply changes
+
+## suthep restart
+
+Restart services (stop and start containers, update Nginx configs).
+
+### Usage
+
+```bash
+suthep restart [service-name] [options]
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `service-name` | Name or index (1-based) of the service to restart (optional). Use `suthep list` to see available services with indices. |
+
+### Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--file` | `-f` | Configuration file path | `suthep.yml` |
+| `--all` | - | Restart all services | `false` |
+| `--no-https` | - | Skip HTTPS setup | `false` |
+| `--no-nginx` | - | Skip Nginx configuration | `false` |
+
+### Examples
+
+```bash
+# Restart a specific service by name
+suthep restart api
+
+# Restart a specific service by index
+suthep restart 1
+
+# Restart all services
+suthep restart --all
+
+# Restart without HTTPS
+suthep restart api --no-https
+
+# Restart without Nginx updates
+suthep restart api --no-nginx
+
+# Restart with custom config
+suthep restart api -f production.yml
+```
+
+### What It Does
+
+1. **Stops Docker containers** (if running)
+2. **Starts Docker containers** again
+3. **Waits for health checks** (if configured)
+4. **Updates Nginx configurations**
+5. **Sets up HTTPS** (if enabled)
+6. **Reloads Nginx** to apply changes
+
+## suthep list
+
+List all services and their status (running, stopped, container status, Nginx configuration).
+
+### Usage
+
+```bash
+suthep list [options]
+# or
+suthep ls [options]
+```
+
+### Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--file` | `-f` | Configuration file path | `suthep.yml` |
+
+### Examples
+
+```bash
+# List all services
+suthep list
+
+# Use the alias
+suthep ls
+
+# List with custom config file
+suthep list -f production.yml
+```
+
+### What It Does
+
+1. **Loads configuration** from `suthep.yml`
+2. **Checks Docker container status** for each service (if configured)
+3. **Checks Nginx configuration status** for each service
+4. **Displays a formatted table** showing:
+   - Service index number (1, 2, 3...)
+   - Service name
+   - Overall status (Running/Stopped/Partial)
+   - Port number
+   - Container name and status
+   - Nginx configuration status
+   - Domain names
+5. **Shows summary statistics** (running, stopped, total)
+
+### Notes
+
+- **Service indices**: The index numbers shown in the list can be used with other commands (e.g., `suthep restart 1` instead of `suthep restart api`)
+- **Index-based selection**: All service commands (`deploy`, `up`, `down`, `restart`, `logs`) support both service names and indices
+
+### Output Format
+
+The command displays a color-coded table:
+
+- **● Running** (green) - Service is fully operational (container running + Nginx enabled)
+- **○ Stopped** (red) - Service is stopped (container stopped + Nginx disabled)
+- **⚠ Partial** (yellow) - Mixed state (e.g., container running but Nginx disabled)
+
+### Status Indicators
+
+- **Container Status**: Shows if Docker containers are running or stopped
+- **Nginx Status**: Shows if Nginx configuration is enabled, disabled, or not configured
+- **Overall Status**: Combines container and Nginx status to show the complete service state
+
+### Notes
+
+- **Docker services**: Status depends on both container and Nginx configuration
+- **Non-Docker services**: Status depends only on Nginx configuration
+- **Partial status**: Indicates a service that's partially configured (e.g., container running but Nginx not enabled)
+- The command checks actual container and file system state, not just configuration
+
+## suthep logs
+
+View logs for Docker services running in your project.
+
+### Usage
+
+```bash
+suthep logs [service-name] [options]
+```
+
+### Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `service-name` | Name or index (1-based) of the service to show logs for (optional, shows all services if not specified). Use `suthep list` to see available services with indices. |
+
+### Options
+
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--file` | `-f` | Configuration file path | `suthep.yml` |
+| `--follow` | - | Follow log output (like `tail -f`) | `false` |
+| `--tail` | - | Number of lines to show from the end of logs | `100` |
+
+### Examples
+
+```bash
+# Show logs for all services (last 100 lines)
+suthep logs
+
+# Show logs for a specific service by name
+suthep logs api
+
+# Show logs for a specific service by index
+suthep logs 1
+
+# Follow logs for all services (real-time streaming)
+suthep logs --follow
+
+# Follow logs for a specific service
+suthep logs api --follow
+
+# Show last 50 lines for a specific service
+suthep logs api --tail 50
+
+# Follow logs with custom tail
+suthep logs api --follow --tail 200
+```
+
+### What It Does
+
+1. **Loads configuration** from `suthep.yml`
+2. **Filters Docker services** (only Docker services have container logs)
+3. **Checks container status** (only shows logs for running containers)
+4. **Displays logs**:
+   - In non-follow mode: Shows recent logs and exits
+   - In follow mode: Streams logs in real-time until interrupted (Ctrl+C)
+5. **Color-codes output** by service name for easy identification
+
+### Notes
+
+- **Docker services only**: Logs are only available for services with Docker configuration. Non-Docker services are skipped with a warning.
+- **Running containers only**: Only shows logs for containers that are currently running. Stopped containers are listed separately.
+- **Follow mode**: Use `--follow` to stream logs in real-time. Press `Ctrl+C` to stop.
+- **Multiple services**: When viewing logs for multiple services, each log line is prefixed with the service name in a unique color.
+- **Tail option**: The `--tail` option controls how many lines to show from the end of the log file. This applies to both follow and non-follow modes.
 
 ## Global Options
 
@@ -295,6 +502,9 @@ suthep down api && suthep deploy api
 
 # Or redeploy all services
 suthep down --all && suthep deploy
+
+# Or simply restart a service
+suthep restart api
 ```
 
 ### Maintenance Workflow

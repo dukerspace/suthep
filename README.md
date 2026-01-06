@@ -185,11 +185,54 @@ suthep deploy [service-name] [-f suthep.yml] [--no-https] [--no-nginx] [-e KEY=V
 ```
 
 **Options:**
-- `service-name`: Name of the service to deploy (optional, deploys all services if not specified)
+- `service-name`: Name or index (1-based) of the service to deploy (optional, deploys all services if not specified). Use `suthep list` to see available services with indices.
 - `-f, --file`: Configuration file path (default: `suthep.yml`)
 - `--no-https`: Skip HTTPS/SSL certificate setup
 - `--no-nginx`: Skip Nginx configuration (useful for testing)
 - `-e, --env`: Set environment variables (can be used multiple times, e.g., `-e KEY1=value1 -e KEY2=value2`)
+
+### `suthep restart`
+
+Restart services (stop and start containers, update Nginx configs).
+
+```bash
+suthep restart [service-name] [-f suthep.yml] [--all] [--no-https] [--no-nginx]
+```
+
+**Options:**
+- `service-name`: Name or index (1-based) of the service to restart (optional). Use `suthep list` to see available services with indices.
+- `-f, --file`: Configuration file path (default: `suthep.yml`)
+- `--all`: Restart all services
+- `--no-https`: Skip HTTPS setup
+- `--no-nginx`: Skip Nginx configuration
+
+### `suthep list`
+
+List all services and their status (running, stopped, container status, Nginx configuration).
+
+```bash
+suthep list [-f suthep.yml]
+# or
+suthep ls [-f suthep.yml]
+```
+
+**Options:**
+- `-f, --file`: Configuration file path (default: `suthep.yml`)
+
+**Options:**
+- `-f, --file`: Configuration file path (default: `suthep.yml`)
+
+**Output:**
+- Displays a formatted table with service index numbers, status, ports, container status, and Nginx configuration
+- Shows summary statistics (running, stopped, total)
+- Color-coded status indicators (green for running, red for stopped, yellow for partial)
+
+**Service Selection:**
+All service commands (`deploy`, `up`, `down`, `restart`, `logs`) support selecting services by:
+- **Name**: Use the service name (e.g., `suthep restart api`)
+- **Index**: Use the 1-based index number shown in `suthep list` (e.g., `suthep restart 1`)
+
+Use `suthep list` to see all services with their index numbers.
 
 ## Examples
 

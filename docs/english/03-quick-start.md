@@ -141,6 +141,12 @@ suthep deploy
 ### Check Service Status
 
 ```bash
+# List all services and their status
+suthep list
+
+# Or use the alias
+suthep ls
+
 # View Nginx configuration
 sudo nginx -t
 
@@ -157,8 +163,18 @@ docker logs <container-name>
 2. Redeploy (bring down and deploy again):
    ```bash
    suthep down <service-name> && suthep deploy <service-name>
+   # Or using index (see indices with `suthep list`):
+   suthep down 1 && suthep deploy 1
    # Or for all services:
    suthep down --all && suthep deploy
+   ```
+3. Or simply restart a service:
+   ```bash
+   suthep restart <service-name>
+   # Or using index:
+   suthep restart 1
+   # Or restart all services:
+   suthep restart --all
    ```
 
 ### Stop Services
