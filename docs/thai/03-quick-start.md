@@ -141,6 +141,12 @@ suthep deploy
 ### ตรวจสอบสถานะบริการ
 
 ```bash
+# แสดงรายการบริการทั้งหมดและสถานะ
+suthep list
+
+# หรือใช้ alias
+suthep ls
+
 # ดูการตั้งค่า Nginx
 sudo nginx -t
 
@@ -157,8 +163,18 @@ docker logs <container-name>
 2. Redeploy (หยุดและ deploy อีกครั้ง):
    ```bash
    suthep down <service-name> && suthep deploy <service-name>
+   # หรือใช้ index (ดู index ด้วย `suthep list`):
+   suthep down 1 && suthep deploy 1
    # หรือสำหรับบริการทั้งหมด:
    suthep down --all && suthep deploy
+   ```
+3. หรือแค่รีสตาร์ทบริการ:
+   ```bash
+   suthep restart <service-name>
+   # หรือใช้ index:
+   suthep restart 1
+   # หรือรีสตาร์ทบริการทั้งหมด:
+   suthep restart --all
    ```
 
 ### หยุดบริการ

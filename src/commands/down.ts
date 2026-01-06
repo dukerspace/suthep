@@ -2,6 +2,10 @@ import chalk from 'chalk'
 import fs from 'fs-extra'
 import type { ServiceConfig } from '../types/config'
 import { loadConfig } from '../utils/config-loader'
+import {
+  findServiceByIdentifier,
+  getServiceNotFoundError,
+} from '../utils/service-finder'
 import { isContainerRunning, removeDockerContainer, stopDockerContainer } from '../utils/docker'
 import {
   disableSite,
@@ -43,20 +47,14 @@ export async function downCommand(options: DownOptions): Promise<void> {
         )
       )
     } else if (options.serviceName) {
-      const service = config.services.find((s) => s.name === options.serviceName)
+      const service = findServiceByIdentifier(config, options.serviceName)
       if (!service) {
-        throw new Error(
-          `Service "${
-            options.serviceName
-          }" not found in configuration. Available services: ${config.services
-            .map((s) => s.name)
-            .join(', ')}`
-        )
+        throw new Error(getServiceNotFoundError(options.serviceName, config))
       }
       servicesToDown = [service]
-      console.log(chalk.cyan(`📋 Bringing down service: ${options.serviceName}\n`))
+      console.log(chalk.cyan(`📋 Bringing down service: ${service.name}\n`))
     } else {
-      throw new Error('Either specify a service name or use --all flag')
+      throw new Error('Either specify a service name/index or use --all flag')
     }
 
     // Group services by domain for nginx config management

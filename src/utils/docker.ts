@@ -1,4 +1,5 @@
 import chalk from 'chalk'
+import { spawn } from 'child_process'
 import { execa } from 'execa'
 import type { ServiceConfig } from '../types/config'
 import { getLoadedEnvVars, mergeEnvVars } from './env-loader'
@@ -647,6 +648,84 @@ export async function getContainerLogs(
       }`
     )
   }
+}
+
+/**
+ * Stream container logs (follow mode)
+ * This spawns a process that streams logs in real-time
+ */
+export async function streamContainerLogs(
+  containerName: string,
+  lines: number = 100,
+  onLog: (line: string) => void
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const childProcess = spawn('docker', [
+      'logs',
+      '--tail',
+      lines.toString(),
+      '--follow',
+      containerName,
+    ])
+
+    let buffer = ''
+
+    // Stream stdout line by line
+    childProcess.stdout?.on('data', (chunk: Buffer) => {
+      buffer += chunk.toString()
+      const lines = buffer.split('\n')
+      // Keep the last incomplete line in buffer
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (line.trim()) {
+          onLog(line)
+        }
+      }
+    })
+
+    // Handle stderr
+    childProcess.stderr?.on('data', (chunk: Buffer) => {
+      const error = chunk.toString()
+      // Some docker commands output to stderr even on success, so we'll log it
+      if (error.trim() && !error.includes('follow')) {
+        onLog(`[stderr] ${error.trim()}`)
+      }
+    })
+
+    // Handle process errors
+    childProcess.on('error', (error) => {
+      reject(
+        new Error(
+          `Failed to stream logs for container ${containerName}: ${
+            error instanceof Error ? error.message : error
+          }`
+        )
+      )
+    })
+
+    // Handle process exit
+    childProcess.on('exit', (code, signal) => {
+      // If killed by signal (e.g., Ctrl+C), that's expected
+      if (signal === 'SIGINT' || signal === 'SIGTERM') {
+        resolve()
+        return
+      }
+
+      // If exited with non-zero code, it might be an error
+      if (code !== 0 && code !== null) {
+        reject(
+          new Error(
+            `Docker logs process exited with code ${code} for container ${containerName}`
+          )
+        )
+        return
+      }
+
+      // Normal exit
+      resolve()
+    })
+  })
 }
 
 /**

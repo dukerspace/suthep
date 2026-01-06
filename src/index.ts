@@ -5,6 +5,10 @@ import { fileURLToPath } from 'url'
 import { deployCommand } from './commands/deploy'
 import { downCommand } from './commands/down'
 import { initCommand } from './commands/init'
+import { listCommand } from './commands/list'
+import { logsCommand } from './commands/logs'
+import { restartCommand } from './commands/restart'
+import { selfUpdateCommand } from './commands/self-update'
 import { setupCommand } from './commands/setup'
 import { upCommand } from './commands/up'
 
@@ -47,7 +51,7 @@ program
     },
     []
   )
-  .argument('[service-name]', 'Name of the service to deploy (deploys all if not specified)')
+  .argument('[service-name]', 'Name or index (1-based) of the service to deploy (deploys all if not specified)')
   .action((serviceName, options: any) => {
     // Parse environment variables from CLI
     const cliEnvVars: Record<string, string> = {}
@@ -79,7 +83,7 @@ program
   .description('Bring down services (stop containers and disable Nginx configs)')
   .option('-f, --file <path>', 'Configuration file path', 'suthep.yml')
   .option('--all', 'Bring down all services', false)
-  .argument('[service-name]', 'Name of the service to bring down')
+  .argument('[service-name]', 'Name or index (1-based) of the service to bring down')
   .action((serviceName, options) => {
     downCommand({
       file: options.file || 'suthep.yml',
@@ -95,7 +99,7 @@ program
   .option('--all', 'Bring up all services', false)
   .option('--no-https', 'Skip HTTPS setup')
   .option('--no-nginx', 'Skip Nginx configuration')
-  .argument('[service-name]', 'Name of the service to bring up')
+  .argument('[service-name]', 'Name or index (1-based) of the service to bring up')
   .action((serviceName, options) => {
     upCommand({
       file: options.file || 'suthep.yml',
@@ -103,6 +107,62 @@ program
       serviceName: serviceName,
       https: options.https !== false,
       nginx: options.nginx !== false,
+    })
+  })
+
+program
+  .command('logs')
+  .description('View logs for services (Docker containers only)')
+  .option('-f, --file <path>', 'Configuration file path', 'suthep.yml')
+  .option('--follow', 'Follow log output (like tail -f)', false)
+  .option('--tail <number>', 'Number of lines to show from the end of logs', '100')
+  .argument('[service-name]', 'Name or index (1-based) of the service to show logs for (shows all if not specified)')
+  .action((serviceName, options) => {
+    logsCommand({
+      file: options.file || 'suthep.yml',
+      serviceName: serviceName,
+      follow: options.follow || false,
+      tail: parseInt(options.tail || '100', 10),
+    })
+  })
+
+program
+  .command('restart')
+  .description('Restart services (stop and start containers, update Nginx configs)')
+  .option('-f, --file <path>', 'Configuration file path', 'suthep.yml')
+  .option('--all', 'Restart all services', false)
+  .option('--no-https', 'Skip HTTPS setup')
+  .option('--no-nginx', 'Skip Nginx configuration')
+  .argument('[service-name]', 'Name or index (1-based) of the service to restart')
+  .action((serviceName, options) => {
+    restartCommand({
+      file: options.file || 'suthep.yml',
+      all: options.all || false,
+      serviceName: serviceName,
+      https: options.https !== false,
+      nginx: options.nginx !== false,
+    })
+  })
+
+program
+  .command('list')
+  .alias('ls')
+  .description('List all services and their status (running, stopped, etc.)')
+  .option('-f, --file <path>', 'Configuration file path', 'suthep.yml')
+  .action((options) => {
+    listCommand({
+      file: options.file || 'suthep.yml',
+    })
+  })
+
+program
+  .command('self-update')
+  .alias('update')
+  .description('Update suthep to the latest version from npm')
+  .option('--force', 'Force update even if current version is newer', false)
+  .action((options) => {
+    selfUpdateCommand({
+      force: options.force || false,
     })
   })
 

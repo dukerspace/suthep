@@ -3,6 +3,10 @@ import fs from 'fs-extra'
 import type { ServiceConfig } from '../types/config'
 import { certificateExists, requestCertificate } from '../utils/certbot'
 import { loadConfig } from '../utils/config-loader'
+import {
+  findServiceByIdentifier,
+  getServiceNotFoundError,
+} from '../utils/service-finder'
 import { deployService, performHealthCheck } from '../utils/deployment'
 import {
   cleanupTempContainer,
@@ -43,19 +47,13 @@ export async function deployCommand(options: DeployOptions): Promise<void> {
     // Filter services based on serviceName if provided
     let servicesToDeploy: ServiceConfig[] = []
     if (options.serviceName) {
-      const service = config.services.find((s) => s.name === options.serviceName)
+      const service = findServiceByIdentifier(config, options.serviceName)
       if (!service) {
-        throw new Error(
-          `Service "${
-            options.serviceName
-          }" not found in configuration. Available services: ${config.services
-            .map((s) => s.name)
-            .join(', ')}`
-        )
+        throw new Error(getServiceNotFoundError(options.serviceName, config))
       }
       servicesToDeploy = [service]
       console.log(chalk.green(`✅ Configuration loaded for project: ${config.project.name}`))
-      console.log(chalk.cyan(`📋 Deploying service: ${options.serviceName}\n`))
+      console.log(chalk.cyan(`📋 Deploying service: ${service.name}\n`))
     } else {
       servicesToDeploy = config.services
       console.log(chalk.green(`✅ Configuration loaded for project: ${config.project.name}`))

@@ -7,7 +7,11 @@ import {
   getServiceNotFoundError,
 } from '../utils/service-finder'
 import { waitForService } from '../utils/deployment'
-import { isContainerRunning, startDockerContainer } from '../utils/docker'
+import {
+  isContainerRunning,
+  startDockerContainer,
+  stopDockerContainer,
+} from '../utils/docker'
 import {
   enableSite,
   generateMultiServiceNginxConfig,
@@ -16,7 +20,7 @@ import {
   writeNginxConfig,
 } from '../utils/nginx'
 
-interface UpOptions {
+interface RestartOptions {
   file: string
   all: boolean
   serviceName?: string
@@ -24,11 +28,11 @@ interface UpOptions {
   nginx: boolean
 }
 
-export async function upCommand(options: UpOptions): Promise<void> {
-  console.log(chalk.blue.bold('\n🚀 Bringing Up Services\n'))
+export async function restartCommand(options: RestartOptions): Promise<void> {
+  console.log(chalk.blue.bold('\n🔄 Restarting Services\n'))
 
   try {
-    // Load configuration (this will also load .env files for variable substitution)
+    // Load configuration
     if (!(await fs.pathExists(options.file))) {
       throw new Error(`Configuration file not found: ${options.file}`)
     }
@@ -38,46 +42,73 @@ export async function upCommand(options: UpOptions): Promise<void> {
 
     console.log(chalk.green(`✅ Configuration loaded for project: ${config.project.name}`))
 
-    // Determine which services to bring up
-    let servicesToUp: ServiceConfig[] = []
+    // Determine which services to restart
+    let servicesToRestart: ServiceConfig[] = []
 
     if (options.all) {
-      servicesToUp = config.services
+      servicesToRestart = config.services
       console.log(
-        chalk.cyan(`📋 Bringing up all services: ${servicesToUp.map((s) => s.name).join(', ')}\n`)
+        chalk.cyan(
+          `📋 Restarting all services: ${servicesToRestart.map((s) => s.name).join(', ')}\n`
+        )
       )
     } else if (options.serviceName) {
       const service = findServiceByIdentifier(config, options.serviceName)
       if (!service) {
         throw new Error(getServiceNotFoundError(options.serviceName, config))
       }
-      servicesToUp = [service]
-      console.log(chalk.cyan(`📋 Bringing up service: ${service.name}\n`))
+      servicesToRestart = [service]
+      console.log(chalk.cyan(`📋 Restarting service: ${service.name}\n`))
     } else {
       throw new Error('Either specify a service name/index or use --all flag')
     }
 
     // Group services by domain for nginx config management
-    const domainToServices = new Map<string, ServiceConfig[]>()
     const allDomains = new Set<string>()
 
-    for (const service of servicesToUp) {
+    for (const service of servicesToRestart) {
       for (const domain of service.domains) {
         allDomains.add(domain)
-        if (!domainToServices.has(domain)) {
-          domainToServices.set(domain, [])
-        }
-        domainToServices.get(domain)!.push(service)
       }
     }
 
-    // Start Docker containers
-    for (const service of servicesToUp) {
+    // Restart Docker containers
+    for (const service of servicesToRestart) {
       if (service.docker) {
-        console.log(chalk.cyan(`\n🐳 Starting Docker container for service: ${service.name}`))
+        console.log(chalk.cyan(`\n🐳 Restarting Docker container for service: ${service.name}`))
+        const containerName = service.docker.container
+
+        // Stop container if running
+        try {
+          const isRunning = await isContainerRunning(containerName)
+          if (isRunning) {
+            await stopDockerContainer(containerName)
+            console.log(chalk.green(`  ✅ Stopped container: ${containerName}`))
+          } else {
+            console.log(chalk.yellow(`  ⚠️  Container ${containerName} is not running`))
+          }
+        } catch (error: any) {
+          const errorMessage = error?.message || String(error) || 'Unknown error'
+          if (
+            errorMessage.toLowerCase().includes('no such container') ||
+            errorMessage.toLowerCase().includes('container not found')
+          ) {
+            console.log(
+              chalk.yellow(`  ⚠️  Container ${containerName} not found (will create new one)`)
+            )
+          } else {
+            console.error(
+              chalk.red(`  ❌ Failed to stop container ${containerName}:`),
+              errorMessage
+            )
+            throw error
+          }
+        }
+
+        // Start container
         try {
           await startDockerContainer(service)
-          console.log(chalk.green(`  ✅ Container started for service: ${service.name}`))
+          console.log(chalk.green(`  ✅ Started container: ${containerName}`))
         } catch (error) {
           console.error(
             chalk.red(`  ❌ Failed to start container for service ${service.name}:`),
@@ -89,7 +120,7 @@ export async function upCommand(options: UpOptions): Promise<void> {
     }
 
     // Wait for services to be healthy
-    for (const service of servicesToUp) {
+    for (const service of servicesToRestart) {
       if (service.healthCheck) {
         console.log(chalk.cyan(`\n🏥 Waiting for service ${service.name} to be healthy...`))
         const isHealthy = await waitForService(service, config.deployment.healthCheckTimeout)
@@ -105,13 +136,13 @@ export async function upCommand(options: UpOptions): Promise<void> {
 
     // Configure Nginx
     if (options.nginx && allDomains.size > 0) {
-      console.log(chalk.cyan(`\n⚙️  Configuring Nginx reverse proxy...`))
+      console.log(chalk.cyan(`\n⚙️  Updating Nginx reverse proxy configurations...`))
 
-      // Create a set of service names being brought up for quick lookup
-      const servicesBeingUpped = new Set(servicesToUp.map((s) => s.name))
+      // Create a set of service names being restarted for quick lookup
+      const servicesBeingRestarted = new Set(servicesToRestart.map((s) => s.name))
 
       // For each domain, find all services that use it (from all config services)
-      // and include all active services (both newly brought up and already running)
+      // and include all active services (both newly restarted and already running)
       for (const domain of allDomains) {
         const configName = domain.replace(/\./g, '_')
 
@@ -127,12 +158,11 @@ export async function upCommand(options: UpOptions): Promise<void> {
               activeServices.push(service)
             }
           } else {
-            // Service without docker - include if it's being brought up or assume it's running
-            if (servicesBeingUpped.has(service.name)) {
+            // Service without docker - include if it's being restarted or assume it's running
+            if (servicesBeingRestarted.has(service.name)) {
               activeServices.push(service)
             } else {
-              // For non-docker services, assume they're running if not explicitly being brought up
-              // This is a best-effort approach
+              // For non-docker services, assume they're running if not explicitly being restarted
               activeServices.push(service)
             }
           }
@@ -199,7 +229,7 @@ export async function upCommand(options: UpOptions): Promise<void> {
                 activeServices.push(service)
               }
             } else {
-              if (servicesBeingUpped.has(service.name)) {
+              if (servicesBeingRestarted.has(service.name)) {
                 activeServices.push(service)
               } else {
                 activeServices.push(service)
@@ -244,12 +274,12 @@ export async function upCommand(options: UpOptions): Promise<void> {
       }
     }
 
-    console.log(chalk.green.bold('\n✅ Services brought up successfully!\n'))
+    console.log(chalk.green.bold('\n✅ Services restarted successfully!\n'))
 
     // Print service URLs
     if (allDomains.size > 0) {
       console.log(chalk.cyan('📋 Service URLs:'))
-      for (const service of servicesToUp) {
+      for (const service of servicesToRestart) {
         for (const domain of service.domains) {
           const protocol = options.https ? 'https' : 'http'
           const servicePath = service.path || '/'
@@ -261,9 +291,10 @@ export async function upCommand(options: UpOptions): Promise<void> {
     }
   } catch (error) {
     console.error(
-      chalk.red('\n❌ Failed to bring up services:'),
+      chalk.red('\n❌ Failed to restart services:'),
       error instanceof Error ? error.message : error
     )
     process.exit(1)
   }
 }
+
