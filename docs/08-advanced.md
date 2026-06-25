@@ -407,5 +407,5 @@ docker network inspect bridge
 
 ---
 
-**Previous:** [Troubleshooting](./07-troubleshooting.md) | **Back to:** [README](./README.md)
+**Previous:** [Troubleshooting](./07-troubleshooting.md) | **Back to:** [Home](/)
 

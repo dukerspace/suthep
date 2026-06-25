@@ -1,0 +1,105 @@
+# Suthep Configuration Example
+# Copy this file to suthep.yml and customize for your project
+
+project:
+  name: my-app
+  version: 1.0.0
+
+services:
+  # Example 1: Service without Docker (runs directly on host)
+  # Perfect for Node.js with PM2, Python with Gunicorn, etc.
+  - name: api
+    port: 3000
+    domains:
+      - api.example.com
+    healthCheck:
+      path: /health
+      interval: 30
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+  # Example 2: Service with Docker image
+  # Suthep will pull the image and create the container
+  - name: webapp
+    port: 8080
+    docker:
+      image: nginx:latest
+      container: webapp-container
+      port: 80
+    domains:
+      - example.com
+      - www.example.com
+    healthCheck:
+      path: /
+      interval: 30
+
+  # Example 3: Service connecting to existing Docker container
+  # Useful when containers are managed separately (e.g., docker-compose)
+  - name: database-proxy
+    port: 5432
+    docker:
+      container: postgres-container
+      port: 5432
+    domains:
+      - db.example.com
+
+  # Example 4: Path-based routing
+  # Multiple services on the same domain using different paths
+  - name: api-v2
+    port: 3001
+    path: /api
+    domains:
+      - myapp.com
+    docker:
+      image: myapp/api:latest
+      container: api-v2-container
+      port: 3001
+    healthCheck:
+      path: /health
+      interval: 30
+
+  - name: frontend
+    port: 3000
+    path: /
+    domains:
+      - myapp.com
+    docker:
+      image: myapp/frontend:latest
+      container: frontend-container
+      port: 3000
+    healthCheck:
+      path: /
+      interval: 30
+
+  # Example 5: Private Docker Registry
+  # Pull images from a private registry with authentication
+  - name: private-service
+    port: 4000
+    domains:
+      - private.example.com
+    docker:
+      image: registry.example.com/mycompany/app:latest
+      container: private-service-container
+      port: 4000
+      registry: registry.example.com  # Registry URL (optional, inferred from image if not specified)
+      username: ${DOCKER_REGISTRY_USER}  # Username (can use environment variables)
+      password: ${DOCKER_REGISTRY_PASSWORD}  # Password (recommended: use environment variables for security)
+    healthCheck:
+      path: /health
+      interval: 30
+
+# Nginx Configuration
+nginx:
+  configPath: /etc/nginx/sites-available
+  reloadCommand: sudo nginx -t && sudo systemctl reload nginx
+
+# Certbot Configuration (SSL/TLS certificates)
+certbot:
+  email: admin@example.com
+  staging: false  # Set to true for testing to avoid rate limits
+
+# Deployment Configuration
+deployment:
+  strategy: rolling  # Options: rolling, blue-green
+  healthCheckTimeout: 30000  # milliseconds

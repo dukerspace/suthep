@@ -1,0 +1,113 @@
+# Suthep Configuration Example with Environment Variables
+# Copy this file to suthep.yml and create a .env file with your values
+#
+# Environment variables are loaded from .env or .env.local files in the same directory
+# Variables can be referenced using ${VAR_NAME} or ${VAR_NAME:-default_value}
+#
+# Example .env file:
+#   PROJECT_NAME=my-awesome-app
+#   PROJECT_VERSION=1.0.0
+#   API_PORT=3000
+#   API_DOMAIN=api.example.com
+#   DOCKER_IMAGE=myapp/api:latest
+#   CONTAINER_NAME=api-container
+#   NODE_ENV=production
+#   DATABASE_URL=postgresql://user:pass@localhost:5432/dbname
+#   CERTBOT_EMAIL=admin@example.com
+#   CERTBOT_STAGING=false
+
+project:
+  name: ${PROJECT_NAME:-my-app}
+  version: ${PROJECT_VERSION:-1.0.0}
+
+services:
+  # Example 1: API service with environment variables
+  - name: api
+    port: ${API_PORT:-3000}  # Uses API_PORT from .env, defaults to 3000
+    domains:
+      - ${API_DOMAIN:-api.example.com}
+      - ${API_DOMAIN_WWW:-www.api.example.com}
+    healthCheck:
+      path: ${HEALTH_CHECK_PATH:-/health}
+      interval: ${HEALTH_CHECK_INTERVAL:-30}
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${API_PORT:-3000}
+      DATABASE_URL: ${DATABASE_URL}
+      # You can also reference other env vars in the environment section
+      REDIS_URL: ${REDIS_URL:-redis://localhost:6379}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+
+  # Example 2: Docker service with environment variables
+  - name: webapp
+    port: ${WEBAPP_PORT:-8080}
+    docker:
+      image: ${WEBAPP_IMAGE:-nginx:latest}  # Docker image from env var
+      container: ${WEBAPP_CONTAINER:-webapp-container}
+      port: ${WEBAPP_CONTAINER_PORT:-80}  # Internal container port
+    domains:
+      - ${WEBAPP_DOMAIN:-example.com}
+      - ${WEBAPP_DOMAIN_WWW:-www.example.com}
+    healthCheck:
+      path: ${WEBAPP_HEALTH_PATH:-/}
+      interval: ${WEBAPP_HEALTH_INTERVAL:-30}
+
+  # Example 3: Service with all values from environment variables
+  - name: backend
+    port: ${BACKEND_PORT}  # Required - no default, will error if not set
+    docker:
+      image: ${BACKEND_IMAGE}  # Required
+      container: ${BACKEND_CONTAINER}  # Required
+      port: ${BACKEND_CONTAINER_PORT:-8000}
+    domains:
+      - ${BACKEND_DOMAIN}
+    environment:
+      ENV: ${NODE_ENV:-production}
+      API_KEY: ${BACKEND_API_KEY}  # Required - will error if not set
+      DEBUG: ${DEBUG:-false}
+
+  # Example 4: Path-based routing with environment variables
+  - name: api-v2
+    port: ${API_V2_PORT:-3001}
+    path: ${API_V2_PATH:-/api}
+    domains:
+      - ${APP_DOMAIN:-myapp.com}
+    docker:
+      image: ${API_V2_IMAGE:-myapp/api:latest}
+      container: ${API_V2_CONTAINER:-api-v2-container}
+      port: ${API_V2_CONTAINER_PORT:-3001}
+    healthCheck:
+      path: ${API_V2_HEALTH_PATH:-/health}
+      interval: ${API_V2_HEALTH_INTERVAL:-30}
+    environment:
+      VERSION: ${API_V2_VERSION:-2.0.0}
+      FEATURES: ${API_V2_FEATURES:-all}
+
+  - name: frontend
+    port: ${FRONTEND_PORT:-3000}
+    path: ${FRONTEND_PATH:-/}
+    domains:
+      - ${APP_DOMAIN:-myapp.com}
+    docker:
+      image: ${FRONTEND_IMAGE:-myapp/frontend:latest}
+      container: ${FRONTEND_CONTAINER:-frontend-container}
+      port: ${FRONTEND_CONTAINER_PORT:-3000}
+    healthCheck:
+      path: ${FRONTEND_HEALTH_PATH:-/}
+      interval: ${FRONTEND_HEALTH_INTERVAL:-30}
+
+# Nginx Configuration
+nginx:
+  configPath: ${NGINX_CONFIG_PATH:-/etc/nginx/sites-available}
+  reloadCommand: ${NGINX_RELOAD_CMD:-sudo nginx -t && sudo systemctl reload nginx}
+
+# Certbot Configuration (SSL/TLS certificates)
+certbot:
+  email: ${CERTBOT_EMAIL}  # Required - no default
+  staging: ${CERTBOT_STAGING:-false}  # Set to true for testing to avoid rate limits
+
+# Deployment Configuration
+deployment:
+  strategy: ${DEPLOYMENT_STRATEGY:-rolling}  # Options: rolling, blue-green
+  healthCheckTimeout: ${HEALTH_CHECK_TIMEOUT:-30000}  # milliseconds
+

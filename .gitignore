@@ -1,8 +1,12 @@
 node_modules/
 dist/
+docs/node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
 *.log
 .env
 .DS_Store
 *.swp
 *.swo
 *~
+.turbo/
