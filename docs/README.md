@@ -1,38 +1,51 @@
 # Suthep Documentation
 
-Welcome to the Suthep documentation! Choose your preferred language:
+This folder is the source for the [VitePress](https://vitepress.dev/) documentation site.
 
-## Available Languages
+## Local development
 
-- 🇬🇧 [English Documentation](./english/README.md) - English user guide
-- 🇹🇭 [Thai Documentation](./thai/README.md) - คู่มือผู้ใช้ภาษาไทย
+From this directory:
 
-## Documentation Structure
+```bash
+npm install
+npm run dev
+```
 
-Both language versions include:
+Or from the repo root:
 
-1. **Introduction** - Overview of Suthep and its features
-2. **Installation** - Step-by-step installation guide
-3. **Quick Start** - Get started in minutes
-4. **Configuration Guide** - Complete configuration reference
-5. **Commands Reference** - All available commands
-6. **Examples** - Real-world deployment examples
-7. **Troubleshooting** - Common issues and solutions
-8. **Advanced Topics** - Advanced configuration and optimization
+```bash
+npm run docs:dev
+```
 
-## Quick Links
+Open `http://localhost:5173/suthep/` (VitePress uses the `base` path from config).
 
-### English
-- [Start Here](./english/README.md)
-- [Quick Start Guide](./english/03-quick-start.md)
-- [Configuration Reference](./english/04-configuration.md)
+## Build
 
-### Thai
-- [เริ่มต้นที่นี่](./thai/README.md)
-- [คู่มือเริ่มต้นใช้งาน](./thai/03-quick-start.md)
-- [คู่มือการตั้งค่า](./thai/04-configuration.md)
+From this directory:
 
----
+```bash
+npm run build
+npm run preview
+```
 
-For the main project README, see [../README.md](../README.md)
+Or from the repo root:
 
+```bash
+npm run docs:build
+npm run docs:preview
+```
+
+Static output is written to `docs/.vitepress/dist`.
+
+## Languages
+
+| Locale | Path |
+|--------|------|
+| English | `/` (root) |
+| Thai | `/th/` |
+
+Guide pages live as Markdown files in `docs/` (English) and `docs/th/` (Thai).
+
+Published site: [dukerspace.github.io/suthep](https://dukerspace.github.io/suthep/)
+
+For the project README, see [GitHub](https://github.com/dukerspace/suthep/blob/main/README.md).

@@ -1,0 +1,51 @@
+# Example: Configuration without Docker
+# All services run directly on the host machine
+# Useful for services managed by PM2, systemd, supervisor, etc.
+
+project:
+  name: my-app
+  version: 1.0.0
+
+services:
+  # Node.js API service (e.g., running with PM2)
+  - name: api
+    port: 3000
+    domains:
+      - api.example.com
+    healthCheck:
+      path: /health
+      interval: 30
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+  # Python web service (e.g., running with Gunicorn)
+  - name: web
+    port: 8000
+    domains:
+      - example.com
+      - www.example.com
+    healthCheck:
+      path: /health
+      interval: 30
+
+  # Go microservice
+  - name: auth
+    port: 4000
+    domains:
+      - auth.example.com
+    healthCheck:
+      path: /status
+      interval: 60
+
+nginx:
+  configPath: /etc/nginx/sites-available
+  reloadCommand: sudo nginx -t && sudo systemctl reload nginx
+
+certbot:
+  email: admin@example.com
+  staging: false
+
+deployment:
+  strategy: rolling
+  healthCheckTimeout: 30000

@@ -80,5 +80,5 @@ Ready to get started? Continue to:
 
 ---
 
-**Previous:** [README](./README.md) | **Next:** [Installation →](./02-installation.md)
+**Previous:** [Home](/) | **Next:** [Installation →](./02-installation.md)
 

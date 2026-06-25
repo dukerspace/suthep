@@ -407,5 +407,5 @@ docker network inspect bridge
 
 ---
 
-**ก่อนหน้า:** [การแก้ปัญหา](./07-troubleshooting.md) | **กลับไป:** [README](./README.md)
+**ก่อนหน้า:** [การแก้ปัญหา](./07-troubleshooting.md) | **กลับไป:** [หน้าแรก](/th/)
 

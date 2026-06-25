@@ -1,6 +1,12 @@
 # Suthep
 
+<p align="center">
+  <img src="assets/doisuthep-logo-8bit.png" alt="Doi Suthep — Wat Phra That Doi Suthep pixel logo" width="360" />
+</p>
+
 A powerful CLI tool for deploying projects with automatic Nginx reverse proxy setup, HTTPS with Certbot, and zero-downtime deployments.
+
+📖 **Documentation:** [dukerspace.github.io/suthep](https://dukerspace.github.io/suthep/)
 
 ## Table of Contents
 

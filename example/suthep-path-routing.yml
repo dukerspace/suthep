@@ -1,0 +1,62 @@
+# Example: Path-based Routing Configuration
+# Multiple services on the same domain using different paths
+# This is useful for monorepo deployments or microservices
+
+project:
+  name: path-routing-app
+  version: 1.0.0
+
+services:
+  # API service on /api path
+  - name: api
+    port: 3001
+    path: /api
+    domains:
+      - example.com
+    docker:
+      image: myapp/api:latest
+      container: api-container
+      port: 3001
+    healthCheck:
+      path: /health
+      interval: 30
+
+  # UI service on root path
+  - name: ui
+    port: 3000
+    path: /
+    domains:
+      - example.com
+    docker:
+      image: myapp/ui:latest
+      container: ui-container
+      port: 3000
+    healthCheck:
+      path: /
+      interval: 30
+
+  # Admin service on /admin path
+  - name: admin
+    port: 3002
+    path: /admin
+    domains:
+      - muacle.com
+    docker:
+      image: myapp/admin:latest
+      container: admin-container
+      port: 3002
+    healthCheck:
+      path: /health
+      interval: 30
+
+nginx:
+  configPath: /etc/nginx/sites-available
+  reloadCommand: sudo nginx -t && sudo systemctl reload nginx
+
+certbot:
+  email: admin@example.com
+  staging: false
+
+deployment:
+  strategy: rolling
+  healthCheckTimeout: 30000

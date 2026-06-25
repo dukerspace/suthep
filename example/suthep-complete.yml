@@ -1,0 +1,103 @@
+# Complete Example Configuration
+# This combines all service types for a comprehensive deployment
+
+project:
+  name: my-app
+  version: 1.0.0
+
+services:
+  # Service 1: Simple API without Docker (runs directly on host)
+  - name: api
+    port: 3000
+    domains:
+      - api.example.com
+      - www.api.example.com
+    healthCheck:
+      path: /health
+      interval: 30
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+
+  # Service 2: Web application with Docker image
+  - name: webapp
+    port: 8080
+    docker:
+      image: nginx:latest
+      container: webapp-container
+      port: 80
+    domains:
+      - example.com
+      - www.example.com
+    healthCheck:
+      path: /
+      interval: 30
+
+  # Service 3: Dashboard with Docker and environment variables
+  - name: dashboard
+    port: 5000
+    docker:
+      image: myapp/dashboard:latest
+      container: dashboard-container
+      port: 5000
+    domains:
+      - dashboard.example.com
+      - admin.example.com
+    healthCheck:
+      path: /api/health
+      interval: 60
+    environment:
+      DATABASE_URL: postgresql://localhost:5432/dashboard
+      REDIS_URL: redis://localhost:6379
+
+  # Service 4: Connect to existing Docker container
+  - name: database-proxy
+    port: 5432
+    docker:
+      container: postgres-container
+      port: 5432
+    domains:
+      - db.example.com
+
+  # Service 5: Path-based routing - API on /api path
+  - name: api-v2
+    port: 3001
+    path: /api
+    domains:
+      - example.com
+    docker:
+      image: myapp/api:latest
+      container: api-v2-container
+      port: 3001
+    healthCheck:
+      path: /health
+      interval: 30
+
+  # Service 6: Path-based routing - UI on root path
+  - name: ui
+    port: 3000
+    path: /
+    domains:
+      - www.example.com
+    docker:
+      image: myapp/ui:latest
+      container: ui-container
+      port: 3000
+    healthCheck:
+      path: /
+      interval: 30
+
+# Nginx Configuration
+nginx:
+  configPath: /etc/nginx/sites-available
+  reloadCommand: sudo nginx -t && sudo systemctl reload nginx
+
+# Certbot Configuration (SSL/TLS certificates)
+certbot:
+  email: admin@example.com
+  staging: false  # Set to true for testing
+
+# Deployment Strategy
+deployment:
+  strategy: rolling  # Options: rolling, blue-green
+  healthCheckTimeout: 30000  # milliseconds

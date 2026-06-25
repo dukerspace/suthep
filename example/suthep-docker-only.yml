@@ -1,0 +1,71 @@
+# Example: Configuration with Docker Only
+# All services are deployed as Docker containers
+
+project:
+  name: docker-app
+  version: 1.0.0
+
+services:
+  # Frontend application
+  - name: frontend
+    port: 3000
+    docker:
+      image: myapp/frontend:latest
+      container: frontend-container
+      port: 3000
+    domains:
+      - example.com
+      - www.example.com
+    healthCheck:
+      path: /
+      interval: 30
+
+  # Backend API
+  - name: backend
+    port: 4000
+    docker:
+      image: myapp/backend:latest
+      container: backend-container
+      port: 4000
+    domains:
+      - api.example.com
+    healthCheck:
+      path: /api/health
+      interval: 30
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://db:5432/mydb
+
+  # Worker service
+  - name: worker
+    port: 5000
+    docker:
+      image: myapp/worker:latest
+      container: worker-container
+      port: 5000
+    domains:
+      - worker.example.com
+    healthCheck:
+      path: /health
+      interval: 60
+
+  # Redis proxy (connecting to existing container)
+  - name: redis-proxy
+    port: 6379
+    docker:
+      container: redis-container
+      port: 6379
+    domains:
+      - redis.example.com
+
+nginx:
+  configPath: /etc/nginx/sites-available
+  reloadCommand: sudo nginx -t && sudo systemctl reload nginx
+
+certbot:
+  email: admin@example.com
+  staging: false
+
+deployment:
+  strategy: rolling
+  healthCheckTimeout: 30000

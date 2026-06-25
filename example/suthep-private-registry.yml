@@ -1,0 +1,115 @@
+# Suthep Configuration Example: Private Docker Registry
+# This example demonstrates how to use private Docker registries with authentication
+
+project:
+  name: private-registry-app
+  version: 1.0.0
+
+services:
+  # Example 1: Private Registry with explicit credentials
+  # Use environment variables for passwords (recommended for security)
+  - name: api
+    port: 3000
+    domains:
+      - api.example.com
+    docker:
+      image: registry.example.com/mycompany/api:latest
+      container: api-container
+      port: 3000
+      registry: registry.example.com
+      username: myuser
+      password: ${DOCKER_REGISTRY_PASSWORD}  # Load from .env file or environment
+    healthCheck:
+      path: /health
+      interval: 30
+
+  # Example 2: Docker Hub private repository
+  # For Docker Hub, registry can be omitted (defaults to docker.io)
+  - name: webapp
+    port: 8080
+    domains:
+      - example.com
+    docker:
+      image: myuser/private-webapp:latest
+      container: webapp-container
+      port: 80
+      username: ${DOCKER_USERNAME}
+      password: ${DOCKER_PASSWORD}
+    healthCheck:
+      path: /
+      interval: 30
+
+  # Example 3: AWS ECR (Elastic Container Registry)
+  # Note: For AWS ECR, you typically use AWS CLI to get temporary credentials
+  # This example shows the basic structure
+  - name: ecr-service
+    port: 5000
+    domains:
+      - ecr.example.com
+    docker:
+      image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp:latest
+      container: ecr-service-container
+      port: 5000
+      registry: 123456789012.dkr.ecr.us-east-1.amazonaws.com
+      username: AWS
+      password: ${AWS_ECR_TOKEN}  # Use AWS CLI to get token: aws ecr get-login-password
+    healthCheck:
+      path: /health
+      interval: 30
+
+  # Example 4: Google Container Registry (GCR)
+  - name: gcr-service
+    port: 6000
+    domains:
+      - gcr.example.com
+    docker:
+      image: gcr.io/my-project/myapp:latest
+      container: gcr-service-container
+      port: 6000
+      registry: gcr.io
+      username: _json_key  # For service account JSON key
+      password: ${GCR_JSON_KEY}  # Base64 encoded service account JSON
+    healthCheck:
+      path: /health
+      interval: 30
+
+  # Example 5: GitHub Container Registry (GHCR)
+  - name: ghcr-service
+    port: 7000
+    domains:
+      - ghcr.example.com
+    docker:
+      image: ghcr.io/myorg/myapp:latest
+      container: ghcr-service-container
+      port: 7000
+      registry: ghcr.io
+      username: ${GITHUB_USERNAME}
+      password: ${GITHUB_TOKEN}  # GitHub Personal Access Token with read:packages permission
+    healthCheck:
+      path: /health
+      interval: 30
+
+# Nginx Configuration
+nginx:
+  configPath: /etc/nginx/sites-available
+  reloadCommand: sudo nginx -t && sudo systemctl reload nginx
+
+# Certbot Configuration (SSL/TLS certificates)
+certbot:
+  email: admin@example.com
+  staging: false
+
+# Deployment Configuration
+deployment:
+  strategy: rolling
+  healthCheckTimeout: 30000
+
+# Environment Variables (.env file example)
+# Create a .env file in the same directory as suthep.yml with:
+# DOCKER_REGISTRY_PASSWORD=your-secure-password
+# DOCKER_USERNAME=your-dockerhub-username
+# DOCKER_PASSWORD=your-dockerhub-password
+# AWS_ECR_TOKEN=$(aws ecr get-login-password --region us-east-1)
+# GCR_JSON_KEY=base64-encoded-service-account-json
+# GITHUB_USERNAME=your-github-username
+# GITHUB_TOKEN=ghp_your-personal-access-token
